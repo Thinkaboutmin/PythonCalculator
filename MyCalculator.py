@@ -1,6 +1,6 @@
 #! python3
 
-# TkInterSixth.py - A calculator capable of realising small problems
+# MyCalculator.py - A calculator capable of realising small problems
 # Made by Thinkaboutmin
 
 try:
@@ -167,7 +167,7 @@ class Calculator:
 
         logging.debug("Top menu was ran")
 
-    def __visor_adder(self, from_, *_, **__):
+    def __visor_adder(self, from_):
         """Adds values into the visor according to the needs"""
 
         logging.debug("Initializing visor adder")
@@ -228,7 +228,7 @@ class Calculator:
             self.storage["result"] = self.storage["value1"]
         self.__button_effect(self.special_buttons["="])
     
-    def _visor_alter(self, v: str="0", s: bool = False):
+    def _visor_alter(self, v="0", s=False):
         """Alters the visor value and moves the cursor to the last number"""
 
         if not s:
@@ -260,7 +260,7 @@ class Calculator:
 
         self.__button_effect(self.special_buttons[operator])
 
-    def _visor_humanizer(self, foo: str):
+    def _visor_humanizer(self, foo):
         """Transforms the value on the visor as it increases and decreases"""
         # TODO make a more readable screen for user
         # 144.444.444 or possibility for 14,54 and return values that can be rounded without any trouble like 14,0 to 14
@@ -270,7 +270,7 @@ class Calculator:
         pass
 
     @staticmethod
-    def _comma_to_dot(v: str, s: bool=False):
+    def _comma_to_dot(v, s=False):
         """Exchange the comma to dot when necessary"""
         # FIXME It's use is ugly and confusing, even if it's for a easy thing
         # line = {"Line": [], "Char": []}
