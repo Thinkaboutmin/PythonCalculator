@@ -49,7 +49,6 @@ class Calculator:
         self.visor["font"] = ("TimesNewRoman", "20")
 
         self.storage = {
-            # TODO label each one of the functions and rework on it. Still need work on it
             "operator": "",  # Grabs the operator
             "value1": "",  # Grabs the first value
             "value2": "",  # Grabs the second value
@@ -129,9 +128,9 @@ class Calculator:
         self.special_buttons["="].bind_all("<Key-Return>", lambda _: self.__calculus())
         self.special_buttons["="].bind_all("<Key-equal>", lambda _: self.__calculus())
 
-        self.special_buttons["←"].bind_all("<Key-BackSpace>", lambda _: self.__visor_del())
-        self.special_buttons["C"].bind_all("<Key-Delete>", lambda _: self.__visor_del(True))
-        self.special_buttons["CA"].bind_all("<Key-End>", lambda _: self.__visor_del(True, True))
+        self.special_buttons["←"].bind_all("<Key-BackSpace>", lambda x: self.__visor_del(x))
+        self.special_buttons["C"].bind_all("<Key-Delete>", lambda x: self.__visor_del(x))
+        self.special_buttons["CA"].bind_all("<Key-End>", lambda x: self.__visor_del(x))
 
         self.special_buttons["+"].bind_all("<Key-KP_Add>", lambda x: self.__common_task(x))
         self.special_buttons["+"].bind_all("<Key-plus>", lambda x: self.__common_task(x))
@@ -148,9 +147,9 @@ class Calculator:
         self.special_buttons["-"]["command"] = lambda: self.__common_task("-")
         self.special_buttons["÷"]["command"] = lambda: self.__common_task("/")
         self.special_buttons["×"]["command"] = lambda: self.__common_task("*")
-        self.special_buttons["←"]["command"] = self.__visor_del
-        self.special_buttons["C"]["command"] = lambda: self.__visor_del(True)
-        self.special_buttons["CA"]["command"] = lambda: self.__visor_del(True, True)
+        self.special_buttons["←"]["command"] = lambda: self.__visor_del("←")
+        self.special_buttons["C"]["command"] = lambda: self.__visor_del("C")
+        self.special_buttons["CA"]["command"] = lambda: self.__visor_del("CA")
 
         logging.debug("Buttons gen was run")
 
@@ -158,8 +157,8 @@ class Calculator:
         """Adds a top menu for info, version and constants"""
         logging.debug("Initializing top menu")
 
-        # TODO there still more things to be done
-        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me", "I'm Jomar, a developer"))
+        # TODO Constants, options and such...
+        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me, a bad developer"))
         self.ab_program.add_command(label="program",
                                     command=lambda: messagebox.showinfo("Program", "A small calculator"))
 
@@ -173,25 +172,7 @@ class Calculator:
 
         logging.debug("Initializing visor adder")
 
-        # TODO There's a way with code for the algorithm below...
-        # FIXME Deprecated
-        from_ = str(from_)
-        """Duck Typing"""
-        # When I see a bird that walks like a duck, swim like a duck, quack likes a duck, I say that's a duck
-        try:  # Quack
-            __pick = from_
-            int(__pick)
-        except ValueError:  # Not quack
-            try:  # Quack
-                __pick = from_[37]
-                int(__pick)
-            except ValueError:  # Not quack
-                try:  # Quack
-                    __pick = from_[34]
-                    int(__pick)
-                except ValueError:  # Not Quack
-                    raise Warning("Unsupported value")
-        """Ends Duck Typing"""
+        __pick = self.__event_finder(from_)
 
         logging.debug("The number of __pick = {}".format(__pick))
 
@@ -211,13 +192,7 @@ class Calculator:
         """Realizes the common task of adding numbers to the storage"""
         logging.debug("Running common task")
 
-        if isinstance(from_, tk.Event):
-            from_ = str(from_)
-            from_ = from_.split()
-            from_ = from_[5].split("char='" and "'")
-            __operator = from_[1]
-        else:
-            __operator = from_
+        __operator = self.__event_finder(from_)
         if self.storage["operator"]:
             self.__calculus()
             self.storage["value2"] = ""
@@ -261,22 +236,29 @@ class Calculator:
             self.visor.xview_moveto(len(self.visor_value.get()) + 1)
         else:
             self.visor_value.set(v)
-            self.storage["memorize"] = self.storage["result"]
             self.storage["result"] = ""
 
-    def __visor_del(self, all_: bool = False, everything: bool = None):
+    def __visor_del(self, from_):
         """Deletes values from the visor entirely, partially or everything from variables"""
-        # TODO CA symbol
 
-        if not all_:
+        operator = self.__event_finder(from_)
+
+        if operator == "←":
             self.visor_value.set(self.visor_value.get()[0: -1])
             self.__button_effect(self.special_buttons["←"])
-        else:
+        elif operator == "C":
             self.visor_value.set("0")
             self.__button_effect(self.special_buttons["C"])
+        else:
+            self.visor_value.set("0")
+
+            for i in self.storage.keys():
+                self.storage[i] = ""
 
         if self.visor_value.get() == "":
             self.visor_value.set("0")
+
+        self.__button_effect(self.special_buttons[operator])
 
     def _visor_humanizer(self, foo: str):
         """Transforms the value on the visor as it increases and decreases"""
@@ -291,6 +273,14 @@ class Calculator:
     def _comma_to_dot(v: str, s: bool=False):
         """Exchange the comma to dot when necessary"""
         # FIXME It's use is ugly and confusing, even if it's for a easy thing
+        # line = {"Line": [], "Char": []}
+        # cnt = 0
+        # for i in v[1:]:
+        #     cnt += 1
+        #     if i == "." or ",":
+        #         line["Line"].append(cnt)
+        #         line["Char"].append(i)
+            
         if not s:
             v = v.replace(".", ",")
         else:
