@@ -1,6 +1,6 @@
 #! python3
 
-# MyCalculator.py - A calculator capable of realising small problems
+# TkInterSixth.py - A calculator capable of realising small problems
 # Made by Thinkaboutmin
 
 try:
@@ -28,7 +28,7 @@ class Calculator:
         self.__top_menu_commands()
 
         self.buttons = []
-        [self.buttons.append(ttk.Button(self.mainframe, text=i)) for i in range(10)]
+        [self.buttons.append(ttk.Button(self.mainframe, text=str(i))) for i in range(10)]
 
         __sings = ["+", "-", "=", "÷", "×", "√x", "ˣ√x", "C", "CA", "←", "xˣ", "x²", ","]
         self.special_buttons = {i:
@@ -128,9 +128,9 @@ class Calculator:
         self.special_buttons["="].bind_all("<Key-Return>", lambda _: self.__calculus())
         self.special_buttons["="].bind_all("<Key-equal>", lambda _: self.__calculus())
 
-        self.special_buttons["←"].bind_all("<Key-BackSpace>", lambda x: self.__visor_del(x))
-        self.special_buttons["C"].bind_all("<Key-Delete>", lambda x: self.__visor_del(x))
-        self.special_buttons["CA"].bind_all("<Key-End>", lambda x: self.__visor_del(x))
+        self.special_buttons["←"].bind_all("<Key-BackSpace>", lambda _: self.__visor_del("←"))
+        self.special_buttons["C"].bind_all("<Key-Delete>", lambda _: self.__visor_del("C"))
+        self.special_buttons["CA"].bind_all("<Key-End>", lambda _: self.__visor_del("CA"))
 
         self.special_buttons["+"].bind_all("<Key-KP_Add>", lambda x: self.__common_task(x))
         self.special_buttons["+"].bind_all("<Key-plus>", lambda x: self.__common_task(x))
@@ -257,8 +257,10 @@ class Calculator:
 
         if self.visor_value.get() == "":
             self.visor_value.set("0")
-
-        self.__button_effect(self.special_buttons[operator])
+        try:
+            self.__button_effect(self.special_buttons[operator])
+        except KeyError:
+            self.__button_effect(b"" + self.special_buttons[operator])
 
     def _visor_humanizer(self, foo):
         """Transforms the value on the visor as it increases and decreases"""
@@ -280,7 +282,7 @@ class Calculator:
         #     if i == "." or ",":
         #         line["Line"].append(cnt)
         #         line["Char"].append(i)
-            
+
         if not s:
             v = v.replace(".", ",")
         else:
@@ -297,6 +299,8 @@ class Calculator:
     @staticmethod
     def __event_finder(evt):
         """Finds the event of the button"""
+        logging.debug("Initialiazing __event_finder")
+
         if isinstance(evt, tk.Event):
             evt = str(evt)
             evt = evt.split()
@@ -304,6 +308,9 @@ class Calculator:
             __operator = evt[1]
         else:
             __operator = evt
+
+        logging.debug("Result of the __event_finder: {}".format(__operator))
+        logging.debug("End of the __event_finder")
 
         return __operator
 
