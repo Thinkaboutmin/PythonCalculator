@@ -278,6 +278,7 @@ class Calculator:
 
     def __visor_comma_adder(self):
         self.visor_value.set(self.__comma_adder(self.visor_value.get()))
+        self.__button_effect(self.special_buttons[","])
 
     @staticmethod
     def __comma_adder(text):
@@ -309,12 +310,17 @@ class Calculator:
 
         if humanizer:
             logging.debug("Transforming text value into human readable")
+            minus_tf = False
+
+            if text[0] == "-":
+                text = text.replace("-", "")
+                minus_tf = True
+
             dissabler = []
             times = 0
             tmp_dissabler = []
 
             text = text.replace(".", ",")
-
             for i in reversed(text):
                 times += 1
                 tmp_dissabler.append(i)
@@ -360,7 +366,11 @@ class Calculator:
             for i in reversed(dissabler):
                 for m in reversed(i):
                     text += m
+
             logging.debug("Dissabler value after: {}".format(dissabler))
+
+            if minus_tf:
+                text = "-" + text
         else:
             logging.debug("Transforming text value into a computer readable")
 
