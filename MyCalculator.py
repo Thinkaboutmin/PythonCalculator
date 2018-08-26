@@ -13,7 +13,7 @@ except ImportError:
 import logging
 import copy
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="DEBUG", format="%(lineno)s - %(levelname)s: %(message)s ")
+logging.basicConfig(level="CRITICAL", format="%(lineno)s - %(levelname)s: %(message)s ")
 logging.debug("Start of the calculator")
 
 
