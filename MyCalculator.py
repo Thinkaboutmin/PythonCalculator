@@ -11,6 +11,10 @@ except ImportError:
     raise Exception("Unavailable tkinter module")
 
 import logging
+import copy
+# Configure the logging for debugging. Default is CRITICAL
+logging.basicConfig(level="CRITICAL", format="%(lineno)s - %(levelname)s: %(message)s ")
+logging.debug("Start of the calculator")
 
 
 class Calculator:
@@ -30,7 +34,7 @@ class Calculator:
         self.buttons = []
         [self.buttons.append(ttk.Button(self.mainframe, text=str(i))) for i in range(10)]
 
-        __sings = ["+", "-", "=", "÷", "×", "√x", "ˣ√x", "C", "CA", "←", "xˣ", "x²", ","]
+        __sings = ["+", "-", "=", "÷", "×", "√x", "ˣ√x", "C", "CA", "←", "xˣ", "x²", ",", "∓"]
         self.special_buttons = {i:
                                 ttk.Button(self.mainframe, text="{}".format(i))
                                 \
@@ -62,7 +66,7 @@ class Calculator:
 
     def __window_conf(self):
         """Configures the window, such as colors and styles from ttk"""
-        logging.debug("Initializing window confing")
+        logging.debug("Initializing window configuration")
 
         self.master.resizable(False, False)
         self.master.title("Calculator")
@@ -72,7 +76,7 @@ class Calculator:
         ttk.Style().configure("UnclickBtn.TButton", relief="raised")
         ttk.Style().configure(".", background="#606060")
 
-        logging.debug("Window config was run entirely")
+        logging.debug("Window configuration was run entirely")
 
     def __buttons_organizer(self):
         """Organizes the buttons"""
@@ -109,6 +113,8 @@ class Calculator:
         self.special_buttons["←"].grid(column=4, row=1)
         self.special_buttons["C"].grid(column=4, row=2)
         self.special_buttons["CA"].grid(column=4, row=3)
+        self.special_buttons["∓"].grid(column=1, row=5)
+        self.special_buttons[","].grid(column=2, row=5)
 
         logging.debug("button organizer was run entirely")
 
@@ -141,6 +147,8 @@ class Calculator:
         self.special_buttons["÷"].bind_all("<Key-KP_Divide>", lambda x: self.__common_task(x))
         self.special_buttons["×"].bind_all("<Key-KP_Multiply>", lambda x: self.__common_task(x))
         self.special_buttons["×"].bind_all("<Key-asterisk>", lambda x: self.__common_task(x))
+        self.special_buttons["∓"].bind_all("<Key-Control_L>", lambda _: self._pos_to_neg())
+        self.special_buttons[","].bind_all("<Key-comma>", lambda _: self.__visor_comma_adder())
 
         self.special_buttons["="]["command"] = self.__calculus
         self.special_buttons["+"]["command"] = lambda: self.__common_task("+")
@@ -150,6 +158,8 @@ class Calculator:
         self.special_buttons["←"]["command"] = lambda: self.__visor_del("←")
         self.special_buttons["C"]["command"] = lambda: self.__visor_del("C")
         self.special_buttons["CA"]["command"] = lambda: self.__visor_del("CA")
+        self.special_buttons["∓"]["command"] = self._pos_to_neg
+        self.special_buttons[","]["command"] = self.__visor_comma_adder
 
         logging.debug("Buttons gen was run")
 
@@ -200,7 +210,7 @@ class Calculator:
             logging.debug("Already have a operator, here is the storage {}".format(self.storage))
         else:
             self.storage["operator"] = __operator
-            self.storage["value1"] = self._comma_to_dot(self.visor_value.get(), True)
+            self.storage["value1"] = self._visor_humanizer(text=self.visor_value.get(), humanizer=False)
             self._visor_alter(s=True)
 
         self.__button_effect(self.special_buttons[__operator])
@@ -211,28 +221,30 @@ class Calculator:
         logging.debug("Initializing calculus")
         if self.storage["operator"]:
             logging.debug("Calculus state of self.storage - {}".format(self.storage))
-            self.storage["value2"] = self._comma_to_dot(self.visor_value.get(), True)
+            self.storage["value2"] = self._visor_humanizer(text=self.visor_value.get(), humanizer=False)
             exec("try: picker=str(" + self.storage["value1"] + self.storage["operator"] + self.storage["value2"] + ")"
                  "\n"
                  "except ZeroDivisionError: picker='0'"
                  "\n"
-                 "self._visor_alter(self._comma_to_dot(picker), True)"
+                 "self._visor_alter(self._visor_humanizer(text=picker, humanizer=True), True)"
                  )
             self.storage["operator"] = ""
-            self.storage["result"] = self._comma_to_dot(self.visor_value.get(), True)
+            self.storage["result"] = self._visor_humanizer(text=self.visor_value.get(), humanizer=False)
             logging.debug("End of state of self.storage - {}".format(self.storage))
             if self.storage["result"]:
                 self.storage["value1"] = self.storage["result"]
         else:
-            self.storage["value1"] = self._comma_to_dot(self.visor_value.get(), True)
+            self.storage["value1"] = self._visor_humanizer(text=self.visor_value.get(), humanizer=False)
             self.storage["result"] = self.storage["value1"]
         self.__button_effect(self.special_buttons["="])
-    
+
     def _visor_alter(self, v="0", s=False):
         """Alters the visor value and moves the cursor to the last number"""
 
         if not s:
-            self.visor_value.set(self.visor_value.get() + v)
+            tmp_text = self._visor_humanizer(self.visor_value.get() + v, humanizer=False)
+            tmp_text = self._visor_humanizer(text=tmp_text, humanizer=True)
+            self.visor_value.set(tmp_text)
             self.visor.xview_moveto(len(self.visor_value.get()) + 1)
         else:
             self.visor_value.set(v)
@@ -244,7 +256,9 @@ class Calculator:
         operator = self.__event_finder(from_)
 
         if operator == "←":
-            self.visor_value.set(self.visor_value.get()[0: -1])
+            tmp_text = self._visor_humanizer(self.visor_value.get()[0: -1], humanizer=False)
+            tmp_text = self._visor_humanizer(text=tmp_text, humanizer=True)
+            self.visor_value.set(tmp_text)
             self.__button_effect(self.special_buttons["←"])
         elif operator == "C":
             self.visor_value.set("0")
@@ -262,32 +276,108 @@ class Calculator:
         except KeyError:
             self.__button_effect(b"" + self.special_buttons[operator])
 
-    def _visor_humanizer(self, foo):
-        """Transforms the value on the visor as it increases and decreases"""
-        # TODO make a more readable screen for user
-        # 144.444.444 or possibility for 14,54 and return values that can be rounded without any trouble like 14,0 to 14
-        print(self, foo)
-        if True:
-            pass
-        pass
+    def __visor_comma_adder(self):
+        self.visor_value.set(self.__comma_adder(self.visor_value.get()))
 
     @staticmethod
-    def _comma_to_dot(v, s=False):
-        """Exchange the comma to dot when necessary"""
-        # FIXME It's use is ugly and confusing, even if it's for a easy thing
-        # line = {"Line": [], "Char": []}
-        # cnt = 0
-        # for i in v[1:]:
-        #     cnt += 1
-        #     if i == "." or ",":
-        #         line["Line"].append(cnt)
-        #         line["Char"].append(i)
+    def __comma_adder(text):
+        """Verifies if there's a need for a comma else it adds one"""
+        logging.debug("Starting _comma_adder")
+        comma_iden = False
 
-        if not s:
-            v = v.replace(".", ",")
+        for i in text:
+            if i == ",":
+                comma_iden = True
+            else:
+                continue
+
+        if not comma_iden:
+            logging.debug("Possible to add comma")
+            text += ","
+
         else:
-            v = v.replace(",", ".")
-        return v
+            logging.debug("Impossible to add another comma")
+
+        logging.debug("Ending _comma_adder")
+        return text
+
+    @staticmethod
+    def _visor_humanizer(text, humanizer):
+        """Transforms the value on the visor as it increases and decreases"""
+        # TODO Rename variables for a better understanding of what's happening
+        # TODO Investigate further possibilities for this algorithm
+
+        if humanizer:
+            logging.debug("Transforming text value into human readable")
+            dissabler = []
+            times = 0
+            tmp_dissabler = []
+
+            text = text.replace(".", ",")
+
+            for i in reversed(text):
+                times += 1
+                tmp_dissabler.append(i)
+                logging.debug("The tmp value: {}".format(tmp_dissabler))
+                if i == ",":
+                    dissabler.append(copy.copy(tmp_dissabler))
+                    tmp_dissabler = []
+
+                    for k in dissabler:
+                        for m in k:
+                            tmp_dissabler.append(m)
+                    logging.debug("The tmp value: {}".format(tmp_dissabler))
+                    dissabler = [copy.copy(tmp_dissabler)]
+                    tmp_dissabler = []
+
+                elif times == 3:
+                    dissabler.append(copy.copy(tmp_dissabler))
+                    tmp_dissabler = []
+                    times = 0
+
+                else:
+                    continue
+            dissabler.append(copy.copy(tmp_dissabler))
+
+            text = ""
+            usual = 3
+            min_usual = 1
+
+            logging.debug("Dissabler value before: {}".format(dissabler))
+
+            only_nums = False
+            for k, i in enumerate(dissabler):
+                for o in i:
+                    try:
+                        int(o)
+                    except ValueError:
+                        only_nums = True
+                if len(i) == usual and len(dissabler[k + 1]) >= min_usual and not only_nums:
+                    i.append(".")
+
+            for i in reversed(dissabler):
+                for m in reversed(i):
+                    text += m
+            logging.debug("Dissabler value after: {}".format(dissabler))
+        else:
+            logging.debug("Transforming text value into a computer readable")
+
+            text = text.replace(".", "")
+            text = text.replace(",", ".")
+
+        logging.debug("Transforming ended")
+        return text
+
+    def _pos_to_neg(self):
+        """Transform the actual value to a negative number"""
+
+        if self.visor_value.get() != "0":
+            if not self.visor_value.get()[0] == "-":
+                self.visor_value.set("-" + self.visor_value.get())
+            else:
+                self.visor_value.set(self.visor_value.get()[1:])
+
+        self.__button_effect(self.special_buttons["∓"])
 
     @staticmethod
     def __button_effect(btn):
@@ -315,7 +405,7 @@ class Calculator:
         return __operator
 
 
-logging.basicConfig(level="CRITICAL", format="%(lineno)s - %(levelname)s: %(message)s ")
 root = tk.Tk()
 Calculator(root)
 root.mainloop()
+logging.debug("End of the calculator")
