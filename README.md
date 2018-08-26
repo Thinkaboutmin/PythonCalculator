@@ -3,8 +3,8 @@ A calculator that barely works by now.
 
 ## TODO
 ```
-~~Add comma~~ DONE
-~~Negative numbers~~ DONE
+Add comma - DONE
+Negative numbers - DONE
 Constants
 Parenthesis support
 Icons and better UI
