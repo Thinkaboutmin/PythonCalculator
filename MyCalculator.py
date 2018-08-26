@@ -13,7 +13,7 @@ except ImportError:
 import logging
 import copy
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="CRITICAL", format="%(lineno)s - %(levelname)s: %(message)s ")
+logging.basicConfig(level="DEBUG", format="%(lineno)s - %(levelname)s: %(message)s ")
 logging.debug("Start of the calculator")
 
 
@@ -322,6 +322,7 @@ class Calculator:
                 if i == ",":
                     dissabler.append(copy.copy(tmp_dissabler))
                     tmp_dissabler = []
+                    times = 0
 
                     for k in dissabler:
                         for m in k:
@@ -355,6 +356,7 @@ class Calculator:
                 if len(i) == usual and len(dissabler[k + 1]) >= min_usual and not only_nums:
                     i.append(".")
 
+                only_nums = False
             for i in reversed(dissabler):
                 for m in reversed(i):
                     text += m
@@ -365,6 +367,7 @@ class Calculator:
             text = text.replace(".", "")
             text = text.replace(",", ".")
 
+        logging.debug("Text value: {}".format(text))
         logging.debug("Transforming ended")
         return text
 
