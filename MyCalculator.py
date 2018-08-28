@@ -1,7 +1,6 @@
 #! python3
 
 # TkInterSixth.py - A calculator capable of realising small problems
-# Made by Thinkaboutmin
 
 try:
     import tkinter as tk
@@ -13,7 +12,7 @@ except ImportError:
 import logging
 import copy
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="CRITICAL", format="%(lineno)s - %(levelname)s: %(message)s ")
+logging.basicConfig(level="DEBUG", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())  # Lowered it for spelling
 logging.debug("Start of the calculator")
 
 
@@ -40,6 +39,8 @@ class Calculator:
                                 \
                                 for i in __sings
                                 }
+
+        # Hard code a few special buttons to be equal to some, as there's no way to do it in a dictionary comprehension
         self.special_buttons[r"\r"] = self.special_buttons["="]
         self.special_buttons["/"] = self.special_buttons["÷"]
         self.special_buttons["*"] = self.special_buttons["×"]
@@ -56,6 +57,7 @@ class Calculator:
             "operator": "",  # Grabs the operator
             "value1": "",  # Grabs the first value
             "value2": "",  # Grabs the second value
+            "parenthesis": "",  # TODO
             "result": ""  # The final result
         }
 
@@ -72,8 +74,8 @@ class Calculator:
         self.master.title("Calculator")
         ttk.Style().configure("W.TEntry", foreground="black")
         ttk.Style().map("TEntry", fieldbackground=[("readonly", "white")])
-        ttk.Style().configure("ClickBtn.TButton", relief="sunken")
-        ttk.Style().configure("UnclickBtn.TButton", relief="raised")
+        ttk.Style().configure("clickBtn.TButton", relief="sunken")
+        ttk.Style().configure("unClickBtn.TButton", relief="raised")
         ttk.Style().configure(".", background="#606060")
 
         logging.debug("Window configuration was run entirely")
@@ -284,15 +286,15 @@ class Calculator:
     def __comma_adder(text):
         """Verifies if there's a need for a comma else it adds one"""
         logging.debug("Starting _comma_adder")
-        comma_iden = False
+        comma_ver = False
 
         for i in text:
             if i == ",":
-                comma_iden = True
+                comma_ver = True
             else:
                 continue
 
-        if not comma_iden:
+        if not comma_ver:
             logging.debug("Possible to add comma")
             text += ","
 
@@ -305,71 +307,86 @@ class Calculator:
     @staticmethod
     def _visor_humanizer(text, humanizer):
         """Transforms the value on the visor as it increases and decreases"""
-        # TODO Rename variables for a better understanding of what's happening
-        # TODO Investigate further possibilities for this algorithm
 
         if humanizer:
             logging.debug("Transforming text value into human readable")
-            minus_tf = False
+            minus_sign = False
 
             if text[0] == "-":
                 text = text.replace("-", "")
-                minus_tf = True
+                minus_sign = True
 
-            dissabler = []
             times = 0
-            tmp_dissabler = []
+
+            disassembler = []
+            tmp_disassembler = []
 
             text = text.replace(".", ",")
             for i in reversed(text):
                 times += 1
-                tmp_dissabler.append(i)
-                logging.debug("The tmp value: {}".format(tmp_dissabler))
+                tmp_disassembler.append(i)
+                logging.debug("The tmp value: {}".format(tmp_disassembler))
                 if i == ",":
-                    dissabler.append(copy.copy(tmp_dissabler))
-                    tmp_dissabler = []
+                    disassembler.append(copy.copy(tmp_disassembler))
+                    tmp_disassembler = []
                     times = 0
 
-                    for k in dissabler:
+                    for k in disassembler:
                         for m in k:
-                            tmp_dissabler.append(m)
-                    logging.debug("The tmp value: {}".format(tmp_dissabler))
-                    dissabler = [copy.copy(tmp_dissabler)]
-                    tmp_dissabler = []
+                            tmp_disassembler.append(m)
+                    logging.debug("The tmp value: {}".format(tmp_disassembler))
+                    disassembler = [copy.copy(tmp_disassembler)]
+
+                    # There shall be only one index at this moment
+                    non_zero = ("0", ",")
+                    only_zero = False
+
+                    for index_number, value in enumerate(disassembler[0]):
+                        if value not in non_zero:
+                            break
+                        else:
+                            if index_number == len(disassembler[0]) - 1:
+                                only_zero = True
+                                break
+
+                    if only_zero:
+                        disassembler = []
+
+                    tmp_disassembler = []
 
                 elif times == 3:
-                    dissabler.append(copy.copy(tmp_dissabler))
-                    tmp_dissabler = []
+                    disassembler.append(copy.copy(tmp_disassembler))
+                    tmp_disassembler = []
                     times = 0
 
                 else:
                     continue
-            dissabler.append(copy.copy(tmp_dissabler))
+            disassembler.append(copy.copy(tmp_disassembler))
 
             text = ""
             usual = 3
             min_usual = 1
 
-            logging.debug("Dissabler value before: {}".format(dissabler))
+            logging.debug("Disassembler value before: {}".format(disassembler))
 
             only_nums = False
-            for k, i in enumerate(dissabler):
+            for k, i in enumerate(disassembler):
                 for o in i:
                     try:
                         int(o)
                     except ValueError:
                         only_nums = True
-                if len(i) == usual and len(dissabler[k + 1]) >= min_usual and not only_nums:
+                if len(i) == usual and len(disassembler[k + 1]) >= min_usual and not only_nums:
                     i.append(".")
 
                 only_nums = False
-            for i in reversed(dissabler):
+            for i in reversed(disassembler):
                 for m in reversed(i):
                     text += m
 
-            logging.debug("Dissabler value after: {}".format(dissabler))
+            logging.debug("Disassembler value after: {}".format(disassembler))
 
-            if minus_tf:
+            if minus_sign:
                 text = "-" + text
         else:
             logging.debug("Transforming text value into a computer readable")
@@ -395,14 +412,14 @@ class Calculator:
     @staticmethod
     def __button_effect(btn):
         """Adds the clicked and focus effect on buttons"""
-        btn["style"] = "ClickBtn.TButton"
-        btn.after(100, lambda: [None for btn["style"] in ["UnclickBtn.TButton"]])
+        btn["style"] = "clickBtn.TButton"
+        btn.after(100, lambda: [None for btn["style"] in ["unClickBtn.TButton"]])
         btn.focus_set()
 
     @staticmethod
     def __event_finder(evt):
         """Finds the event of the button"""
-        logging.debug("Initialiazing __event_finder")
+        logging.debug("Initializing __event_finder")
 
         if isinstance(evt, tk.Event):
             evt = str(evt)
