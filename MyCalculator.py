@@ -12,7 +12,7 @@ except ImportError:
 import logging
 import copy
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="DEBUG", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())  # Lowered it for spelling
+logging.basicConfig(level="CRITICAL", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())  # Lowered it for spelling
 logging.debug("Start of the calculator")
 
 
