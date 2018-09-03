@@ -6,10 +6,10 @@ A calculator that barely works by now.
 Add comma - DONE
 Negative numbers - DONE
 Constants - DONE
-Parenthesis support
+More Operators
+Parenthesis support - Might not happen
 Icons and better UI
 Remove all comments that demotivates myself and logging stuff
-Whaterver I can do to make it better
 ```
 
 ## Regards
