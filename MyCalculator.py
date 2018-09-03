@@ -26,9 +26,7 @@ class Calculator:
         self.mainframe = ttk.Frame(master)
         self.mainframe.grid()
 
-        self.about = tk.Menu(self.mainframe)
-        self.ab_program = tk.Menu(self.mainframe, tearoff=0)
-        self.__top_menu_commands()
+        self.__window_constructor()
 
         self.buttons = []
         [self.buttons.append(ttk.Button(self.mainframe, text=str(i))) for i in range(10)]
@@ -57,7 +55,6 @@ class Calculator:
             "operator": "",  # Grabs the operator
             "value1": "",  # Grabs the first value
             "value2": "",  # Grabs the second value
-            "parenthesis": "",  # TODO
             "result": ""  # The final result
         }
 
@@ -65,6 +62,26 @@ class Calculator:
         self.__buttons_organizer()
 
         logging.debug("init was run entirely")
+
+    def __window_constructor(self):
+
+        self.about = tk.Menu(self.mainframe)
+        self.constants = tk.Menu(self.mainframe)
+
+        self.ab_program = tk.Menu(self.mainframe, tearoff=0)
+        self.constants_actions = tk.Menu(self.mainframe, tearoff=0)
+
+        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me, a bad developer"))
+        self.ab_program.add_command(label="program",
+                                    command=lambda: messagebox.showinfo("Program", "A small calculator"))
+
+        self.constants_actions.add_command(label="Pi", command=lambda: self.__constants("pi"))
+        self.constants_actions.add_command(label="Gravity", command=lambda: self.__constants("gravity"))
+
+        self.about.add_cascade(label="About", menu=self.ab_program)
+        self.about.add_cascade(label="Constants", menu=self.constants_actions)
+
+        self.master.config(menu=self.about)
 
     def __window_conf(self):
         """Configures the window, such as colors and styles from ttk"""
@@ -164,20 +181,6 @@ class Calculator:
         self.special_buttons[","]["command"] = self.__visor_comma_adder
 
         logging.debug("Buttons gen was run")
-
-    def __top_menu_commands(self):
-        """Adds a top menu for info, version and constants"""
-        logging.debug("Initializing top menu")
-
-        # TODO Constants, options and such...
-        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me, a bad developer"))
-        self.ab_program.add_command(label="program",
-                                    command=lambda: messagebox.showinfo("Program", "A small calculator"))
-
-        self.about.add_cascade(label="About", menu=self.ab_program)
-        self.master.config(menu=self.about)
-
-        logging.debug("Top menu was ran")
 
     def __visor_adder(self, from_):
         """Adds values into the visor according to the needs"""
@@ -282,6 +285,40 @@ class Calculator:
         self.visor_value.set(self.__comma_adder(self.visor_value.get()))
         self.__button_effect(self.special_buttons[","])
 
+    def _pos_to_neg(self):
+        """Transform the actual value to a negative number"""
+
+        logging.debug("Starting Positive to Negative or otherwise")
+
+        if self.visor_value.get() != "0":
+            if not self.visor_value.get()[0] == "-":
+                self.visor_value.set("-" + self.visor_value.get())
+            else:
+                self.visor_value.set(self.visor_value.get()[1:])
+
+        self.__button_effect(self.special_buttons["∓"])
+
+        logging.debug("End of Positive to Negative or otherwise")
+
+    def __constants(self, constant_name):
+        """Receive the name of the constant and alters the visor to the constant value"""
+
+        logging.debug("Starting Constants")
+
+        constants = {
+            "pi": "3,14159265359",
+            "gravity": "9,8"
+        }
+
+        self._visor_alter(constants[constant_name], True)
+
+        logging.debug("End of Constants")
+
+    @staticmethod
+    def __parenthesis():
+        # TODO
+        return "To be done"
+
     @staticmethod
     def __comma_adder(text):
         """Verifies if there's a need for a comma else it adds one"""
@@ -302,6 +339,7 @@ class Calculator:
             logging.debug("Impossible to add another comma")
 
         logging.debug("Ending _comma_adder")
+
         return text
 
     @staticmethod
@@ -398,23 +436,17 @@ class Calculator:
         logging.debug("Transforming ended")
         return text
 
-    def _pos_to_neg(self):
-        """Transform the actual value to a negative number"""
-
-        if self.visor_value.get() != "0":
-            if not self.visor_value.get()[0] == "-":
-                self.visor_value.set("-" + self.visor_value.get())
-            else:
-                self.visor_value.set(self.visor_value.get()[1:])
-
-        self.__button_effect(self.special_buttons["∓"])
-
     @staticmethod
     def __button_effect(btn):
         """Adds the clicked and focus effect on buttons"""
+
+        logging.debug("Start of Click Effect")
+
         btn["style"] = "clickBtn.TButton"
         btn.after(100, lambda: [None for btn["style"] in ["unClickBtn.TButton"]])
         btn.focus_set()
+
+        logging.debug("End of Click Effect")
 
     @staticmethod
     def __event_finder(evt):
