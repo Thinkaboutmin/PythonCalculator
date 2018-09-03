@@ -5,7 +5,7 @@ A calculator that barely works by now.
 ```
 Add comma - DONE
 Negative numbers - DONE
-Constants
+Constants - DONE
 Parenthesis support
 Icons and better UI
 Remove all comments that demotivates myself and logging stuff
