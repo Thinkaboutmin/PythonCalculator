@@ -91,9 +91,10 @@ class Calculator:
         logging.debug("Initializing window configuration")
         self.master.resizable(False, False)
         self.master.title("Calculator")
-
-        image = tk.Image("photo", file="calculator.png")
-        self.master.tk.call('wm', 'iconphoto', self.master, image)
+        
+        # Compatibility Reason
+        # image = tk.Image("photo", file="calculator.png")
+        # self.master.tk.call('wm', 'iconphoto', self.master, image)
 
         # try:
         #     self.master.iconbitmap(os.getcwd() + "/calculator.ico")
