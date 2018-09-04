@@ -1,7 +1,6 @@
 #! python3
 
 # TkInterSixth.py - A calculator capable of realising small problems
-# Made by Thinkaboutmin
 
 try:
     import tkinter as tk
@@ -12,8 +11,10 @@ except ImportError:
 
 import logging
 import copy
+import os
+
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="DEBUG", format="%(lineno)s - %(levelname)s: %(message)s ")
+logging.basicConfig(level="CRITICAL", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())
 logging.debug("Start of the calculator")
 
 
@@ -27,9 +28,7 @@ class Calculator:
         self.mainframe = ttk.Frame(master)
         self.mainframe.grid()
 
-        self.about = tk.Menu(self.mainframe)
-        self.ab_program = tk.Menu(self.mainframe, tearoff=0)
-        self.__top_menu_commands()
+        self.__window_constructor()
 
         self.buttons = []
         [self.buttons.append(ttk.Button(self.mainframe, text=str(i))) for i in range(10)]
@@ -40,6 +39,8 @@ class Calculator:
                                 \
                                 for i in __sings
                                 }
+
+        # Hard code a few special buttons to be equal to some, as there's no way to do it in a dictionary comprehension
         self.special_buttons[r"\r"] = self.special_buttons["="]
         self.special_buttons["/"] = self.special_buttons["÷"]
         self.special_buttons["*"] = self.special_buttons["×"]
@@ -64,16 +65,44 @@ class Calculator:
 
         logging.debug("init was run entirely")
 
+    def __window_constructor(self):
+
+        self.about = tk.Menu(self.mainframe)
+
+        self.ab_program = tk.Menu(self.mainframe, tearoff=0)
+        self.constants_actions = tk.Menu(self.mainframe, tearoff=0)
+
+        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me, a bad developer"))
+        self.ab_program.add_command(label="program",
+                                    command=lambda: messagebox.showinfo("Program", "A small calculator"))
+
+        self.constants_actions.add_command(label="Pi", command=lambda: self.__constants("pi"))
+        self.constants_actions.add_command(label="Gravity", command=lambda: self.__constants("gravity"))
+
+
+        self.about.add_cascade(label="About", menu=self.ab_program)
+        self.about.add_cascade(label="Constants", menu=self.constants_actions)
+
+        self.master.config(menu=self.about)
+
     def __window_conf(self):
         """Configures the window, such as colors and styles from ttk"""
         logging.debug("Initializing window configuration")
-
         self.master.resizable(False, False)
         self.master.title("Calculator")
+
+        image = tk.Image("photo", file="calculator.png")
+        self.master.tk.call('wm', 'iconphoto', self.master, image)
+
+        # try:
+        #     self.master.iconbitmap(os.getcwd() + "/calculator.ico")
+        # except tk.TclError:
+        #     self.master.iconbitmap(os.getcwd() + r"\calculator.ico")
+
         ttk.Style().configure("W.TEntry", foreground="black")
         ttk.Style().map("TEntry", fieldbackground=[("readonly", "white")])
-        ttk.Style().configure("ClickBtn.TButton", relief="sunken")
-        ttk.Style().configure("UnclickBtn.TButton", relief="raised")
+        ttk.Style().configure("clickBtn.TButton", relief="sunken")
+        ttk.Style().configure("unClickBtn.TButton", relief="raised")
         ttk.Style().configure(".", background="#606060")
 
         logging.debug("Window configuration was run entirely")
@@ -148,6 +177,7 @@ class Calculator:
         self.special_buttons["×"].bind_all("<Key-KP_Multiply>", lambda x: self.__common_task(x))
         self.special_buttons["×"].bind_all("<Key-asterisk>", lambda x: self.__common_task(x))
         self.special_buttons["∓"].bind_all("<Key-Control_L>", lambda _: self._pos_to_neg())
+        self.special_buttons[","].bind_all("<Key-comma>", lambda _: self.__visor_comma_adder())
 
         self.special_buttons["="]["command"] = self.__calculus
         self.special_buttons["+"]["command"] = lambda: self.__common_task("+")
@@ -158,22 +188,12 @@ class Calculator:
         self.special_buttons["C"]["command"] = lambda: self.__visor_del("C")
         self.special_buttons["CA"]["command"] = lambda: self.__visor_del("CA")
         self.special_buttons["∓"]["command"] = self._pos_to_neg
+        self.special_buttons[","]["command"] = self.__visor_comma_adder
+
+        # self.special_buttons[","].unbind_all("<Key-comma>")
+        # self.special_buttons[","]["command"] = ""
 
         logging.debug("Buttons gen was run")
-
-    def __top_menu_commands(self):
-        """Adds a top menu for info, version and constants"""
-        logging.debug("Initializing top menu")
-
-        # TODO Constants, options and such...
-        self.ab_program.add_command(label="me", command=lambda: messagebox.showinfo("Me, a bad developer"))
-        self.ab_program.add_command(label="program",
-                                    command=lambda: messagebox.showinfo("Program", "A small calculator"))
-
-        self.about.add_cascade(label="About", menu=self.ab_program)
-        self.master.config(menu=self.about)
-
-        logging.debug("Top menu was ran")
 
     def __visor_adder(self, from_):
         """Adds values into the visor according to the needs"""
@@ -274,58 +294,14 @@ class Calculator:
         except KeyError:
             self.__button_effect(b"" + self.special_buttons[operator])
 
-    @staticmethod
-    def _visor_humanizer(text, humanizer):
-        """Transforms the value on the visor as it increases and decreases"""
-        # TODO Rename variables for a better understanding of what's happening
-        # TODO Investigate further possibilities for this algorithm
-
-        if humanizer:
-            logging.debug("Transforming text value into human readable")
-            dissabler = []
-            times = 0
-            tmp_dissabler = []
-            dot = None
-
-            for i in reversed(text):
-                times += 1
-                tmp_dissabler.append(i)
-                if i == ".":
-                    dot = True
-                    tmp_dissabler.append(i)
-                elif times == 3 and not dot:
-                    dissabler.append(copy.copy(tmp_dissabler))
-                    tmp_dissabler = []
-                    times = 0
-                elif dot:
-                    tmp_dissabler.append(i)
-                else:
-                    continue
-            dissabler.append(copy.copy(tmp_dissabler))
-
-            text = ""
-            usual = 3
-            min_usual = 1
-            for k, i in enumerate(dissabler):
-                if len(i) == usual and len(dissabler[k + 1]) >= min_usual:
-                    i.append(".")
-
-            for i in reversed(dissabler):
-                for m in reversed(i):
-                    text += m
-
-        else:
-            logging.debug("Transforming text value into a computer readable")
-
-            text = text.replace(".", "")
-            text = text.replace(",", ".")
-
-        logging.debug("Transforming ended")
-
-        return text
+    def __visor_comma_adder(self):
+        self.visor_value.set(self.__comma_adder(self.visor_value.get()))
+        self.__button_effect(self.special_buttons[","])
 
     def _pos_to_neg(self):
         """Transform the actual value to a negative number"""
+
+        logging.debug("Starting Positive to Negative or otherwise")
 
         if self.visor_value.get() != "0":
             if not self.visor_value.get()[0] == "-":
@@ -335,18 +311,163 @@ class Calculator:
 
         self.__button_effect(self.special_buttons["∓"])
 
+        logging.debug("End of Positive to Negative or otherwise")
+
+    def __constants(self, constant_name):
+        """Receive the name of the constant and alters the visor to the constant value"""
+
+        logging.debug("Starting Constants")
+
+        constants = {
+            "pi": "3,14159265359",
+            "gravity": "9,8"
+        }
+
+        self._visor_alter(constants[constant_name], True)
+
+        logging.debug("End of Constants")
+
+
+    @staticmethod
+    def __parenthesis():
+        # TODO
+        return "To be done"
+
+    @staticmethod
+    def __comma_adder(text):
+        """Verifies if there's a need for a comma else it adds one"""
+        logging.debug("Starting _comma_adder")
+        comma_ver = False
+
+        for i in text:
+            if i == ",":
+                comma_ver = True
+            else:
+                continue
+
+        if not comma_ver:
+            logging.debug("Possible to add comma")
+            text += ","
+
+        else:
+            logging.debug("Impossible to add another comma")
+
+        logging.debug("Ending _comma_adder")
+
+        return text
+
+    @staticmethod
+    def _visor_humanizer(text, humanizer):
+        """Transforms the value on the visor as it increases and decreases"""
+
+        if humanizer:
+            logging.debug("Transforming text value into human readable")
+            minus_sign = False
+
+            if text[0] == "-":
+                text = text.replace("-", "")
+                minus_sign = True
+
+            times = 0
+
+            disassembler = []
+            tmp_disassembler = []
+
+            text = text.replace(".", ",")
+            for i in reversed(text):
+                times += 1
+                tmp_disassembler.append(i)
+                logging.debug("The tmp value: {}".format(tmp_disassembler))
+                if i == ",":
+                    disassembler.append(copy.copy(tmp_disassembler))
+                    tmp_disassembler = []
+                    times = 0
+
+                    for k in disassembler:
+                        for m in k:
+                            tmp_disassembler.append(m)
+                    logging.debug("The tmp value: {}".format(tmp_disassembler))
+                    disassembler = [copy.copy(tmp_disassembler)]
+
+                    # There shall be only one index at this moment
+                    non_zero = ("0", ",")
+                    only_zero = False
+
+                    for index_number, value in enumerate(disassembler[0]):
+                        if value not in non_zero:
+                            break
+                        else:
+                            if index_number == len(disassembler[0]) - 1:
+                                only_zero = True
+                                break
+
+                    if only_zero:
+                        disassembler = []
+
+                    tmp_disassembler = []
+
+                elif times == 3:
+                    disassembler.append(copy.copy(tmp_disassembler))
+                    tmp_disassembler = []
+                    times = 0
+
+                else:
+                    continue
+            disassembler.append(copy.copy(tmp_disassembler))
+
+            text = ""
+            usual = 3
+            min_usual = 1
+
+            logging.debug("Disassembler value before: {}".format(disassembler))
+
+            only_nums = False
+            for k, i in enumerate(disassembler):
+                for o in i:
+                    try:
+                        int(o)
+                    except ValueError:
+                        only_nums = True
+                if len(i) == usual and len(disassembler[k + 1]) >= min_usual and not only_nums:
+                    i.append(".")
+
+                only_nums = False
+            for i in reversed(disassembler):
+                for m in reversed(i):
+                    text += m
+
+            logging.debug("Disassembler value after: {}".format(disassembler))
+
+            if minus_sign:
+                text = "-" + text
+        else:
+            logging.debug("Transforming text value into a computer readable")
+
+            text = text.replace(".", "")
+            text = text.replace(",", ".")
+
+        logging.debug("Text value: {}".format(text))
+        logging.debug("Transforming ended")
+        return text
+
     @staticmethod
     def __button_effect(btn):
         """Adds the clicked and focus effect on buttons"""
-        btn["style"] = "ClickBtn.TButton"
-        btn.after(100, lambda: [None for btn["style"] in ["UnclickBtn.TButton"]])
+
+        logging.debug("Start of Click Effect")
+
+        btn["style"] = "clickBtn.TButton"
+        btn.after(100, lambda: [None for btn["style"] in ["unClickBtn.TButton"]])
         btn.focus_set()
+
+        logging.debug("End of Click Effect")
 
     @staticmethod
     def __event_finder(evt):
         """Finds the event of the button"""
-        logging.debug("Initialiazing __event_finder")
-
+        logging.debug("Initializing __event_finder")
+        
+        logging.debug("Event is {}".format(evt))
         if isinstance(evt, tk.Event):
             evt = str(evt)
             evt = evt.split()
