@@ -12,6 +12,7 @@ except ImportError:
 import logging
 import copy
 import os
+import platform
 
 # Configure the logging for debugging. Default is CRITICAL
 logging.basicConfig(level="CRITICAL", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())
@@ -466,12 +467,15 @@ class Calculator:
     def __event_finder(evt):
         """Finds the event of the button"""
         logging.debug("Initializing __event_finder")
-        
+
         logging.debug("Event is {}".format(evt))
         if isinstance(evt, tk.Event):
             evt = str(evt)
             evt = evt.split()
-            evt = evt[5].split("char='" and "'")
+            if platform.system() == "Windows":
+                evt = evt[4].split("char='" and "'")
+            else:
+                evt = evt[5].split("char='" and "'")
             __operator = evt[1]
         else:
             __operator = evt
