@@ -1,6 +1,6 @@
 #! python3
 
-# TkInterSixth.py - A calculator capable of realising small problems
+# MyCalculator.py - A calculator capable of realising small problems
 
 try:
     import tkinter as tk
@@ -456,8 +456,12 @@ class Calculator:
         if isinstance(evt, tk.Event):
             evt = str(evt)
             evt = evt.split()
-            evt = evt[5].split("char='" and "'")
-            __operator = evt[1]
+            if len(evt) == 8:
+                evt = evt[5].split("char='" and "'")
+                __operator = evt[1]
+            else:
+                evt = evt[4].split("char='" and "'")
+                __operator = evt[1]
         else:
             __operator = evt
 
