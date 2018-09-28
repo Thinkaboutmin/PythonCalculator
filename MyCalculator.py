@@ -1,6 +1,6 @@
 #! python3
 
-# TkInterSixth.py - A calculator capable of realising small problems
+# MyCalculator.py - A calculator capable of realising small problems
 
 try:
     import tkinter as tk
