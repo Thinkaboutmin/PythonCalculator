@@ -12,7 +12,9 @@ except ImportError:
 import logging
 import copy
 # Configure the logging for debugging. Default is CRITICAL
-logging.basicConfig(level="CRITICAL", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())  # Lowered it for spelling
+
+# Lowered it for reasons
+logging.basicConfig(level="CRITICAL", format="%(lineNo)s - %(levelName)s: %(message)s ".lower())
 logging.debug("Start of the calculator")
 
 
@@ -162,7 +164,7 @@ class Calculator:
         self.special_buttons["-"].bind_all("<Key-KP_Subtract>", lambda x: self.__common_task(x))
         self.special_buttons["-"].bind_all("<Key-minus>", lambda x: self.__common_task(x))
         self.special_buttons["÷"].bind_all("<Key-division>", lambda x: self.__common_task(x))
-        self.special_buttons["÷"].bind_all("<Key-slash>"), lambda x: self.__common_task(x)
+        self.special_buttons["÷"].bind_all("<Key-slash>", lambda x: self.__common_task(x))
         self.special_buttons["÷"].bind_all("<Key-KP_Divide>", lambda x: self.__common_task(x))
         self.special_buttons["×"].bind_all("<Key-KP_Multiply>", lambda x: self.__common_task(x))
         self.special_buttons["×"].bind_all("<Key-asterisk>", lambda x: self.__common_task(x))
