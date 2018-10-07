@@ -462,7 +462,6 @@ class Calculator:
             else:
                 evt = evt[4].split("char='" and "'")
                 __operator = evt[1]
-            a
         else:
             __operator = evt
 
